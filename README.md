@@ -13,7 +13,7 @@ This service has been built following several architecture paradigms:
 
 ### Setup
 
-- Go >= 1.20
-- Docker >= 24.0.5
+- rustc >= 1.72.1
+- docker >= 24.0.5
 
 ### Start service
