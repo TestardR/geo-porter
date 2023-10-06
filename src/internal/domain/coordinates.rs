@@ -11,4 +11,11 @@ impl Coordinates {
         }
     }
 
+    pub fn latitude(&self) -> f64 {
+        self.latitude
+    }
+
+    pub fn longitude(&self) -> f64 {
+        self.longitude
+    }
 }

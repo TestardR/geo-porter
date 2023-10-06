@@ -1,4 +1,4 @@
-### Geo-Tracking service
+### Geo-Location service
 
 This service has been built following several architecture paradigms:
 - [Hexagonal](https://alistair.cockburn.us/hexagonal-architecture/)
