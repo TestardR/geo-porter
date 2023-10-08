@@ -4,7 +4,7 @@ pub struct PortId {
 
 impl PortId {
     pub fn new(id: String) -> Self {
-        Self {id: id}
+        Self {id}
     }
 
     pub fn id(&self) -> &str {

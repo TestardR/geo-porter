@@ -1,80 +1,50 @@
-use super::port_id::PortId;
-use super::coordinates::Coordinates;
-
-pub struct Port {
-    id: PortId,
+pub struct AddOrUpdate {
+    port_id: String,
     name: String,
     city: String,
     country: String,
     alias: Vec<String>,
     regions: Vec<String>,
-    coordinates: Coordinates,
+    latitude: f64,
+    longitude: f64,
     province: String,
     timezone: String,
     unlocs: Vec<String>,
     code: String,
 }
 
-impl Port {
+impl AddOrUpdate {
     pub fn new(
-        id: PortId,
+        port_id: String,
         name: String,
         city: String,
         country: String,
         alias: Vec<String>,
         regions: Vec<String>,
-        coordinates: Coordinates,
+        latitude: f64,
+        longitude: f64,
         province: String,
         timezone: String,
         unlocs: Vec<String>,
-        code: String,
-    ) -> Self {
+        code: String) -> Self {
         Self {
-            id,
+            port_id,
             name,
             city,
             country,
             alias,
             regions,
-            coordinates,
+            latitude,
+            longitude,
             province,
             timezone,
             unlocs,
-            code,
+            code
         }
     }
 
-    pub fn update_port_change(
-        &self,
-        id: PortId,
-        name: String,
-        city: String,
-        country: String,
-        alias: Vec<String>,
-        regions: Vec<String>,
-        coordinates: Coordinates,
-        province: String,
-        timezone: String,
-        unlocs: Vec<String>,
-        code: String,
-    ) -> Port {
-        Port{
-            id,
-            name,
-            city,
-            country,
-            alias,
-            regions,
-            coordinates,
-            province,
-            timezone,
-            unlocs,
-            code,
-        }
-    }
-
-    pub fn id(&self) -> &PortId {
-        &self.id
+    pub fn port_id(&self) -> &str {
+        &self.port_id
     }
 
     pub fn name(&self) -> &str {
@@ -97,8 +67,12 @@ impl Port {
         &self.regions
     }
 
-    pub fn coordinates(&self) -> &Coordinates {
-        &self.coordinates
+    pub fn latitude(&self) -> f64 {
+        self.latitude
+    }
+
+    pub fn longitude(&self) -> f64 {
+        self.longitude
     }
 
     pub fn province(&self) -> &str {
