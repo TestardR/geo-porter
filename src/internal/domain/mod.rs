@@ -2,5 +2,6 @@ pub mod port;
 pub mod port_id;
 pub mod coordinates;
 pub mod port_repository;
-pub mod port_validator;
-pub mod error;
+pub mod errors;
+pub mod add_port_change;
+pub mod add_or_update_port_change;

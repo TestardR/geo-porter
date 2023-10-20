@@ -1,17 +1,24 @@
-use std::error::Error;
-
 use super::port::Port;
 use super::port_id::PortId;
 
-pub trait PortFinder {
-    fn find(&self, id: &PortId) -> Result<Port, Box<dyn Error>>;
+#[derive(Debug)]
+pub enum RepoFindError {
+    Unknown(String),
+    NotFound,
 }
 
-pub trait PortAdder {
-    fn add(&self, port: &Port) -> Result<(), Box<dyn Error>>;
+#[derive(Debug)]
+pub enum RepoAddError {
+    Unknown(String),
 }
 
-pub trait PortUpdater {
-    fn update(&self, port: &Port) -> Result<(), Box<dyn Error>>;
+#[derive(Debug)]
+pub enum UpdateError {
+    Unknown(String),
 }
 
+pub trait PortRepository {
+    fn find(&self, id: &PortId) -> Result<Port, RepoFindError>;
+    fn add(&self, port: &Port) -> Result<(), RepoAddError>;
+    fn update(&self, port: &Port) -> Result<(), UpdateError>;
+}

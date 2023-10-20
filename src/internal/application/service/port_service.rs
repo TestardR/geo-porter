@@ -1,57 +1,61 @@
-use crate::internal::{
-    domain::{
-        error::DomainError,
-        port::Port,
-        port_id::PortId,
-        coordinates::Coordinates,
-        port_validator::Violations,
-        port_repository::{
-            PortAdder,
-            PortFinder,
-            PortUpdater,
-        },
-    },
-    application::{
-        command::add_or_update::AddOrUpdate,
-        shared::error_handler::ErrorHandler,
-    },
-};
+use crate::internal::application::command::add_or_update::AddOrUpdate;
+use crate::internal::domain::coordinates::Coordinates;
+use crate::internal::domain::port::{add_or_update_port, Port};
+use crate::internal::domain::port_id::PortId;
+use crate::internal::domain::port_repository::{PortRepository, RepoFindError};
 
-trait PortFindAddUpdater: PortFinder + PortAdder + PortUpdater {}
-
-trait PortValidator {
-    fn validate(&self, port: Port) -> Result<(), Violations>;
+#[derive(Debug)]
+pub enum AddError {
+    DomainViolation(String),
+    Unknown(String),
 }
 
-pub struct Service<'a> {
-    port_store: &'a dyn PortFindAddUpdater,
-    port_validator: &'a dyn PortValidator,
+#[derive(Debug)]
+pub enum UpdateError {
+    Unknown(String),
 }
 
-impl<'a> Service<'a> {
-    pub fn new(
-        port_store: &'a dyn PortFindAddUpdater,
-        port_validator: &'a dyn PortValidator,
-    ) -> Self {
-        Self {
-            port_store,
-            port_validator,
-        }
+#[derive(Debug)]
+enum AddOrUpdateError {
+    AddError,
+    UpdateError,
+}
+
+pub struct Service<T> {
+    port_store: T,
+}
+
+impl<T: PortRepository> Service<T> {
+    pub fn new(port_store: T) -> Self {
+        Self { port_store }
     }
 
-    pub fn handle_add_or_update_port(&self, command: AddOrUpdate) -> Result<(), DomainError> {
-        match self.port_store.find(&PortId::new(command.port_id().to_string())) {
+    pub fn handle_add_or_update_port(&self, command: AddOrUpdate) -> Result<(), AddOrUpdateError> {
+        let result = self.port_store.find(&PortId::new(command.port_id().to_string()));
+
+        match result {
             Ok(port) => self.handle_update_port(command, port),
-            Err(e) => {}
+            Err(e) => match e {
+                RepoFindError::NotFound => {
+                    let &alias = command.alias();
+                    let &regions = command.regions();
+                    let &unlocs = command.unlocs();
+
+                    let result = self.handle_add_port(command);
+                    // TODO
+                }
+                RepoFindError::Unknown(e) => Err(e)
+            }
         }
+
     }
 
-    pub fn handle_add_port(&self, command: AddOrUpdate) -> Result<(), DomainError> {
+    pub fn handle_add_port(&self, command: AddOrUpdate) -> Result<(), AddError> {
         let &alias = command.alias();
         let &regions = command.regions();
         let &unlocs = command.unlocs();
 
-        let port = Port::new(
+        let result = add_or_update_port(
             PortId::new(command.port_id().to_string()),
             command.name().to_string(),
             command.city().to_string(),
@@ -65,29 +69,15 @@ impl<'a> Service<'a> {
             command.code().to_string(),
         );
 
-        match self.port_validator.validate(port) {
-            Err(e) => {
-                let port_id = command.port_id();
-                Err(ErrorHandler::application_error(&format!("Could not add port with id {port_id}"), Some(Box::new(e))))
-            }
-            Ok(_) => {
-                match self.port_store.add(&port) {
-                    Err(e) => {
-                        let port_id = command.port_id();
-                        Err(ErrorHandler::application_error(&format!("Could not update port with id {port_id}"), Some(e)))
-                    }
-                    Ok(_) => Ok(())
-                }
-            }
-        }
+        Ok(())
     }
 
-    pub fn handle_update_port(&self, command: AddOrUpdate, port: Port) -> Result<(), DomainError> {
+    pub fn handle_update_port(&self, command: AddOrUpdate, port: Port) -> Result<(), UpdateError> {
         let &alias = command.alias();
         let &regions = command.regions();
         let &unlocs = command.unlocs();
 
-        let update_port_change = port.update_port_change(
+        let result = add_or_update_port(
             PortId::new(command.port_id().to_string()),
             command.name().to_string(),
             command.city().to_string(),
@@ -101,20 +91,6 @@ impl<'a> Service<'a> {
             command.code().to_string(),
         );
 
-        match self.port_validator.validate(update_port_change) {
-            Err(e) => {
-                let port_id = command.port_id();
-                Err(ErrorHandler::application_error(&format!("Could not update port with id {port_id}"), Some(Box::new(e))))
-            }
-            Ok(_) => {
-                match self.port_store.update(&update_port_change) {
-                    Err(e) => {
-                        let port_id = command.port_id();
-                        Err(ErrorHandler::application_error(&format!("Could not update port with id {port_id}"), Some(e)))
-                    }
-                    Ok(_) => Ok(())
-                }
-            }
-        }
+        Ok(())
     }
 }

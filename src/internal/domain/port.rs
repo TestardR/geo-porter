@@ -1,3 +1,5 @@
+use crate::internal::domain::add_or_update_port_change::AddOrUpdatePortChange;
+use crate::internal::domain::errors::DomainViolation;
 use super::port_id::PortId;
 use super::coordinates::Coordinates;
 
@@ -30,35 +32,6 @@ impl Port {
         code: String,
     ) -> Self {
         Self {
-            id,
-            name,
-            city,
-            country,
-            alias,
-            regions,
-            coordinates,
-            province,
-            timezone,
-            unlocs,
-            code,
-        }
-    }
-
-    pub fn update_port_change(
-        &self,
-        id: PortId,
-        name: String,
-        city: String,
-        country: String,
-        alias: Vec<String>,
-        regions: Vec<String>,
-        coordinates: Coordinates,
-        province: String,
-        timezone: String,
-        unlocs: Vec<String>,
-        code: String,
-    ) -> Port {
-        Port{
             id,
             name,
             city,
@@ -116,4 +89,46 @@ impl Port {
     pub fn code(&self) -> &str {
         &self.code
     }
+}
+
+pub fn add_or_update_port(
+    id: PortId,
+    name: String,
+    city: String,
+    country: String,
+    alias: Vec<String>,
+    regions: Vec<String>,
+    coordinates: Coordinates,
+    province: String,
+    timezone: String,
+    unlocs: Vec<String>,
+    code: String,
+) -> Result<AddOrUpdatePortChange, DomainViolation> {
+    let mut violations = vec![];
+
+    if name == "" {
+        violations.push(String::from("name is required"));
+    }
+
+    if city == "" {
+        violations.push(String::from("city is required"));
+    }
+
+    if violations.len() > 0 {
+        Err(DomainViolation::new(violations.join(", ")))
+    }
+
+    Ok(AddOrUpdatePortChange::new(
+        id,
+        name,
+        city,
+        country,
+        alias,
+        regions,
+        coordinates,
+        province,
+        timezone,
+        unlocs,
+        code,
+    ))
 }
