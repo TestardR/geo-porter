@@ -1,8 +1,8 @@
 use crate::internal::application::command::add_or_update::AddOrUpdate;
 use crate::internal::domain::coordinates::Coordinates;
-use crate::internal::domain::port::{add_or_update_port, Port};
+use crate::internal::domain::port::{add_or_update_port};
 use crate::internal::domain::port_id::PortId;
-use crate::internal::domain::port_repository::{PortRepository, RepoFindError};
+use crate::internal::domain::port_repository::{PortRepository, RepoAddError, RepoFindError, RepoUpdateError};
 
 #[derive(Debug)]
 pub enum AddError {
@@ -12,13 +12,14 @@ pub enum AddError {
 
 #[derive(Debug)]
 pub enum UpdateError {
+    DomainViolation(String),
     Unknown(String),
 }
 
 #[derive(Debug)]
 enum AddOrUpdateError {
-    AddError,
-    UpdateError,
+    DomainViolation(String),
+    Unknown(String),
 }
 
 pub struct Service<T> {
@@ -31,23 +32,27 @@ impl<T: PortRepository> Service<T> {
     }
 
     pub fn handle_add_or_update_port(&self, command: AddOrUpdate) -> Result<(), AddOrUpdateError> {
-        let result = self.port_store.find(&PortId::new(command.port_id().to_string()));
+        let result = self.port_store.find(PortId::new(command.port_id().to_string()));
 
         match result {
-            Ok(port) => self.handle_update_port(command, port),
-            Err(e) => match e {
-                RepoFindError::NotFound => {
-                    let &alias = command.alias();
-                    let &regions = command.regions();
-                    let &unlocs = command.unlocs();
-
-                    let result = self.handle_add_port(command);
-                    // TODO
+            Ok(_) => match self.handle_update_port(command) {
+                Ok(_) => Ok(()),
+                Err(e) => match e {
+                    UpdateError::Unknown(e) => Err(AddOrUpdateError::Unknown(e)),
+                    UpdateError::DomainViolation(e) => Err(AddOrUpdateError::DomainViolation(e.to_string()))
                 }
-                RepoFindError::Unknown(e) => Err(e)
+            },
+            Err(e) => match e {
+                RepoFindError::NotFound => match self.handle_add_port(command) {
+                        Ok(_) => Ok(()),
+                        Err(e) => match e {
+                            AddError::Unknown(e) => Err(AddOrUpdateError::Unknown(e)),
+                            AddError::DomainViolation(e) => Err(AddOrUpdateError::DomainViolation(e.to_string()))
+                        }
+                }
+                RepoFindError::Unknown(e) => Err(AddOrUpdateError::Unknown(e))
             }
         }
-
     }
 
     pub fn handle_add_port(&self, command: AddOrUpdate) -> Result<(), AddError> {
@@ -69,10 +74,20 @@ impl<T: PortRepository> Service<T> {
             command.code().to_string(),
         );
 
-        Ok(())
+        match result {
+            Ok(change) => {
+                match self.port_store.add(change) {
+                    Ok(_) => Ok(()),
+                    Err(e) => match e {
+                        RepoAddError::Unknown(e) => Err(AddError::Unknown(e))
+                    }
+                }
+            }
+            Err(e) => Err(AddError::DomainViolation(e.to_string()))
+        }
     }
 
-    pub fn handle_update_port(&self, command: AddOrUpdate, port: Port) -> Result<(), UpdateError> {
+    pub fn handle_update_port(&self, command: AddOrUpdate) -> Result<(), UpdateError> {
         let &alias = command.alias();
         let &regions = command.regions();
         let &unlocs = command.unlocs();
@@ -91,6 +106,16 @@ impl<T: PortRepository> Service<T> {
             command.code().to_string(),
         );
 
-        Ok(())
+        match result {
+            Ok(change) => {
+                match self.port_store.update(change) {
+                    Ok(_) => Ok(()),
+                    Err(e) => match e {
+                        RepoUpdateError::Unknown(e)=> Err(UpdateError::Unknown(e))
+                    }
+                }
+            }
+            Err(e) => Err(UpdateError::DomainViolation(e.to_string()))
+        }
     }
 }

@@ -115,7 +115,7 @@ pub fn add_or_update_port(
     }
 
     if violations.len() > 0 {
-        Err(DomainViolation::new(violations.join(", ")))
+        return Err(DomainViolation::new(violations.join(", ")));
     }
 
     Ok(AddOrUpdatePortChange::new(

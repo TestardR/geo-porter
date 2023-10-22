@@ -18,10 +18,4 @@ impl Coordinates {
     pub fn longitude(&self) -> f64 {
         self.longitude
     }
-
-    pub add_port(
-
-    ) {
-
-    }
 }
