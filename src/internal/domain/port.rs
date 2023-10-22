@@ -3,6 +3,9 @@ use crate::internal::domain::errors::DomainViolation;
 use super::port_id::PortId;
 use super::coordinates::Coordinates;
 
+
+
+#[derive(Clone)]
 pub struct Port {
     id: PortId,
     name: String,

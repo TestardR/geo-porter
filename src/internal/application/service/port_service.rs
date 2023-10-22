@@ -44,11 +44,11 @@ impl<T: PortRepository> Service<T> {
             },
             Err(e) => match e {
                 RepoFindError::NotFound => match self.handle_add_port(command) {
-                        Ok(_) => Ok(()),
-                        Err(e) => match e {
-                            AddError::Unknown(e) => Err(AddOrUpdateError::Unknown(e)),
-                            AddError::DomainViolation(e) => Err(AddOrUpdateError::DomainViolation(e.to_string()))
-                        }
+                    Ok(_) => Ok(()),
+                    Err(e) => match e {
+                        AddError::Unknown(e) => Err(AddOrUpdateError::Unknown(e)),
+                        AddError::DomainViolation(e) => Err(AddOrUpdateError::DomainViolation(e.to_string()))
+                    }
                 }
                 RepoFindError::Unknown(e) => Err(AddOrUpdateError::Unknown(e))
             }
@@ -56,21 +56,17 @@ impl<T: PortRepository> Service<T> {
     }
 
     pub fn handle_add_port(&self, command: AddOrUpdate) -> Result<(), AddError> {
-        let &alias = command.alias();
-        let &regions = command.regions();
-        let &unlocs = command.unlocs();
-
         let result = add_or_update_port(
             PortId::new(command.port_id().to_string()),
             command.name().to_string(),
             command.city().to_string(),
             command.country().to_string(),
-            alias,
-            regions,
+            command.alias().to_vec(),
+            command.regions().to_vec(),
             Coordinates::new(command.latitude(), command.longitude()),
             command.province().to_string(),
             command.timezone().to_string(),
-            unlocs,
+            command.unlocs().to_vec(),
             command.code().to_string(),
         );
 
@@ -88,21 +84,17 @@ impl<T: PortRepository> Service<T> {
     }
 
     pub fn handle_update_port(&self, command: AddOrUpdate) -> Result<(), UpdateError> {
-        let &alias = command.alias();
-        let &regions = command.regions();
-        let &unlocs = command.unlocs();
-
         let result = add_or_update_port(
             PortId::new(command.port_id().to_string()),
             command.name().to_string(),
             command.city().to_string(),
             command.country().to_string(),
-            alias,
-            regions,
+            command.alias().to_vec(),
+            command.regions().to_vec(),
             Coordinates::new(command.latitude(), command.longitude()),
             command.province().to_string(),
             command.timezone().to_string(),
-            unlocs,
+            command.unlocs().to_vec(),
             command.code().to_string(),
         );
 
@@ -111,7 +103,7 @@ impl<T: PortRepository> Service<T> {
                 match self.port_store.update(change) {
                     Ok(_) => Ok(()),
                     Err(e) => match e {
-                        RepoUpdateError::Unknown(e)=> Err(UpdateError::Unknown(e))
+                        RepoUpdateError::Unknown(e) => Err(UpdateError::Unknown(e))
                     }
                 }
             }

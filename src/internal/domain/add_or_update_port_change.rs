@@ -31,4 +31,48 @@ impl AddOrUpdatePortChange {
     ) -> Self {
         Self { id, name, city, country, alias, regions, coordinates, province, timezone, unlocs, code }
     }
+
+    pub fn id(&self) -> &PortId {
+        &self.id
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn city(&self) -> &str {
+        &self.city
+    }
+
+    pub fn country(&self) -> &str {
+        &self.country
+    }
+
+    pub fn alias(&self) -> &Vec<String> {
+        &self.alias
+    }
+
+    pub fn regions(&self) -> &Vec<String> {
+        &self.regions
+    }
+
+    pub fn coordinates(&self) -> &Coordinates {
+        &self.coordinates
+    }
+
+    pub fn province(&self) -> &str {
+        &self.province
+    }
+
+    pub fn timezone(&self) -> &str {
+        &self.timezone
+    }
+
+    pub fn unlocs(&self) -> &Vec<String> {
+        &self.unlocs
+    }
+
+    pub fn code(&self) -> &str {
+        &self.code
+    }
 }
